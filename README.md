@@ -18,11 +18,75 @@ Step 6: Perform exact inference using the defined evidence and query variables.<
 Step 7: Print the results.<br>
 
 ## Program :
-<Type your Code here>
+```python
+# Install pgmpy (run once in Colab)
+!pip install pgmpy
 
+from pgmpy.models import DiscreteBayesianNetwork
+from pgmpy.factors.discrete import TabularCPD
+from pgmpy.inference import VariableElimination
 
+# 1. Define the Bayesian Network structure
+model = DiscreteBayesianNetwork([
+    ("Burglary", "Alarm"),
+    ("Earthquake", "Alarm"),
+    ("Alarm", "JohnCalls"),
+    ("Alarm", "MaryCalls")
+])
+
+# 2. Define CPTs
+model.add_cpds(
+    TabularCPD("Burglary", 2, [[0.999], [0.001]]),
+    TabularCPD("Earthquake", 2, [[0.998], [0.002]]),
+    TabularCPD(
+        "Alarm", 2,
+        [[0.999, 0.71, 0.06, 0.05],
+         [0.001, 0.29, 0.94, 0.95]],
+        evidence=["Burglary", "Earthquake"],
+        evidence_card=[2, 2]
+    ),
+    TabularCPD(
+        "JohnCalls", 2,
+        [[0.95, 0.1],
+         [0.05, 0.9]],
+        evidence=["Alarm"],
+        evidence_card=[2]
+    ),
+    TabularCPD(
+        "MaryCalls", 2,
+        [[0.99, 0.3],
+         [0.01, 0.7]],
+        evidence=["Alarm"],
+        evidence_card=[2]
+    )
+)
+
+# 3. Check model
+model.check_model()
+
+# 4. Inference
+print("Inference Examples")
+print("\n***JohnCalls = 1, MaryCalls: 1***\n")
+infer = VariableElimination(model)
+result = infer.query(
+    variables=["Burglary"],
+    evidence={"JohnCalls": 1, "MaryCalls": 1}
+)
+
+print(result)
+
+print("\n***JohnCalls = 1, MaryCalls: 0***\n")
+infer = VariableElimination(model)
+result = infer.query(
+    variables=["Burglary"],
+    evidence={"JohnCalls": 1, "MaryCalls": 0}
+)
+
+print(result)
+```
 ## Output :
-<Show the results>
+
+![alt text](image.png)
 
 ## Result :
 Thus, Bayesian Inference was successfully determined using Variable Elimination Method
